@@ -2394,7 +2394,7 @@ int fc_controlit()
                 std::cerr << "Error creating server socket " << i << std::endl;
             }
             syslog(LOG_ERR, "Error creating server socket %d", i);
-            free(serversockfds);
+            delete[] serversockfds;
             return 1;
         }
     }
@@ -2425,7 +2425,7 @@ int fc_controlit()
                 std::cerr << "Error creating ipc socket" << std::endl;
             }
             syslog(LOG_ERR, "%s", "Error creating ipc socket");
-            free(serversockfds);
+            delete[] serversockfds;
             return 1;
         }
     }
@@ -2449,7 +2449,7 @@ int fc_controlit()
 #ifdef DGDEBUG
         std::cerr << "Unable to seteuid() to bind filter port." << std::endl;
 #endif
-        free(serversockfds);
+        delete[] serversockfds;
         return 1;
     }
 
@@ -2458,7 +2458,7 @@ int fc_controlit()
     if (pidfilefd < 0) {
         syslog(LOG_ERR, "%s", "Error creating/opening pid file.");
         std::cerr << "Error creating/opening pid file:" << o.pid_filename << std::endl;
-        free(serversockfds);
+        delete[] serversockfds;
         return 1;
     }
 
@@ -2472,7 +2472,7 @@ int fc_controlit()
             }
             syslog(LOG_ERR, "Error binding server socket (is something else running on the filter port and ip?");
             close(pidfilefd);
-            free(serversockfds);
+            delete[] serversockfds;
             return 1;
         }
     } else {
@@ -2484,7 +2484,7 @@ int fc_controlit()
                 }
                 syslog(LOG_ERR, "Error binding server socket: [%d] (%s)", o.filter_port, strerror(errno));
                 close(pidfilefd);
-                free(serversockfds);
+                delete[] serversockfds;
                 return 1;
             }
         } else {
@@ -2494,7 +2494,7 @@ int fc_controlit()
                 }
                 syslog(LOG_ERR, "Error binding server sockets  (%s)", strerror(errno));
                 close(pidfilefd);
-                free(serversockfds);
+                delete[] serversockfds;
                 return 1;
             }
         }
@@ -2513,7 +2513,7 @@ int fc_controlit()
         std::cerr << "Unable to re-seteuid()" << std::endl;
 #endif
         close(pidfilefd);
-        free(serversockfds);
+        delete[] serversockfds;
         return 1; // seteuid failed for some reason so exit with error
     }
 
@@ -2532,7 +2532,7 @@ int fc_controlit()
             }
             syslog(LOG_ERR, "Error binding ipc server file (try using the SysV to stop e2guardian then try starting it again or doing an 'rm %s').", o.ipc_filename.c_str());
             close(pidfilefd);
-            free(serversockfds);
+            delete[] serversockfds;
             return 1;
         }
         if (loggersock.listen(256)) { // set it to listen mode with a kernel
@@ -2542,7 +2542,7 @@ int fc_controlit()
             }
             syslog(LOG_ERR, "Error listening to ipc server file");
             close(pidfilefd);
-            free(serversockfds);
+            delete[] serversockfds;
             return 1;
         }
     }
@@ -2554,7 +2554,7 @@ int fc_controlit()
             }
             syslog(LOG_ERR, "Error binding urllistsock server file (try using the SysV to stop e2guardian then try starting it again or doing an 'rm %s').", o.urlipc_filename.c_str());
             close(pidfilefd);
-            free(serversockfds);
+            delete[] serversockfds;
             return 1;
         }
         if (urllistsock.listen(256)) { // set it to listen mode with a kernel
@@ -2564,7 +2564,7 @@ int fc_controlit()
             }
             syslog(LOG_ERR, "Error listening to url ipc server file");
             close(pidfilefd);
-            free(serversockfds);
+            delete[] serversockfds;
             return 1;
         }
     }
@@ -2576,7 +2576,7 @@ int fc_controlit()
             }
             syslog(LOG_ERR, "Error binding iplistsock server file (try using the SysV to stop e2guardian then try starting it again or doing an 'rm %s').", o.ipipc_filename.c_str());
             close(pidfilefd);
-            free(serversockfds);
+            delete[] serversockfds;
             return 1;
         }
         if (iplistsock.listen(256)) { // set it to listen mode with a kernel
@@ -2586,7 +2586,7 @@ int fc_controlit()
             }
             syslog(LOG_ERR, "Error listening to ip ipc server file");
             close(pidfilefd);
-            free(serversockfds);
+            delete[] serversockfds;
             return 1;
         }
     }
@@ -2598,7 +2598,7 @@ int fc_controlit()
         }
         syslog(LOG_ERR, "Error listening to server socket");
         close(pidfilefd);
-        free(serversockfds);
+        delete[] serversockfds;
         return 1;
     }
 
@@ -2609,7 +2609,7 @@ int fc_controlit()
         }
         syslog(LOG_ERR, "Error daemonising");
         close(pidfilefd);
-        free(serversockfds);
+        delete[] serversockfds;
         return 1;
     }
 
@@ -2625,7 +2625,7 @@ int fc_controlit()
     rc = sysv_writepidfile(pidfilefd); // also closes the fd
     if (rc != 0) {
         syslog(LOG_ERR, "Error writing to the e2guardian.pid file: %s", strerror(errno));
-        free(serversockfds);
+        delete[] serversockfds;
         return false;
     }
     // We are now a daemon so all errors need to go in the syslog, rather
@@ -2700,7 +2700,7 @@ int fc_controlit()
         iplistpid = fork();
         if (iplistpid == 0) { // ma ma!  i am the child
             serversockets.deleteAll(); // we don't need our copy of this so close it
-            free(serversockfds);
+            delete[] serversockfds;
             if (!o.no_logger) {
                 loggersock.close(); // we don't need our copy of this so close it
             }
@@ -3305,7 +3305,7 @@ int fc_controlit()
 #endif
 
     serversockets.deleteAll();
-    free(serversockfds);
+    delete[] serversockfds;
 
 #ifdef HAVE_SYS_EPOLL_H
     close(epfd); // close epoll fd
